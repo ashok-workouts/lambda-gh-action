@@ -22,7 +22,7 @@ import {
   GetObjectCommand,
   GetObjectCommandOutput
 } from '@aws-sdk/client-s3';
-
+import xmlJs from 'xml-js';
 import * as _ from "lodash";
 
 const client = new S3Client({ region: "us-east-1" });
@@ -59,6 +59,64 @@ async function getObjectAsString(key: string): Promise<string> {
       throw error;
   }
 }
+
+
+export function parseWebStore(webStore: string): number {
+	return parseInt(webStore.replace(/\D/g, ''), 10);
+}
+
+
+export function getFirstTextXml(item: any): string {
+	if (!item || !item[0] || !item[0]._text || !item[0]._text[0]) return '';
+	return item[0]._text[0].trim();
+}
+
+
+export function parseFulfillmentXml(xml: string, filename: string) {
+	const appId = 'parseFulfillmentXml';
+	try {
+		const json = xmlJs.xml2js(xml, {
+			compact: true,
+			alwaysArray: true,
+		});
+
+		// this should never happen
+		if (!json?.Data945) {
+			throw new Error(`parseFulfillmentXml: malformed xml file ${filename}`);
+		}
+
+		return {
+			webStore: parseWebStore(getFirstTextXml(json.Data945[0].WebStore)),
+			// we need to drill down a few levels to get to the '<document>' node
+			fulfillments: json.Data945[0].documents[0].document.map(document => {
+				const header = document.headerrow[0];
+				return {
+					orderId: parseInt(getFirstTextXml(header?.reference), 10),
+					shipDate: getFirstTextXml(header?.shipdate),
+					shippingName: getFirstTextXml(header?.transportationcode),
+					// get each package with in the document
+					packages: document?.documentpackages[0].packagerow.map(packageRow => {
+						return {
+							trackingNumber: getFirstTextXml(packageRow?.packagenumber),
+							packageShipDate: getFirstTextXml(packageRow?.package_shipdate),
+							lines: packageRow?.document_lines[0]?.linerow.map(line => {
+								return {
+									SKU: getFirstTextXml(line.SKU),
+									UPC: getFirstTextXml(line.UPC),
+									quantity: parseInt(getFirstTextXml(line.quantity), 10),
+								};
+							}),
+						};
+					}),
+				};
+			}),
+		};
+	} catch (error) {
+		console.log(appId, `${filename} ${error.message}`, { filename }, error);
+		throw error;
+	}
+}
+
 
 
 export const handler: SQSHandler = async (event: SQSEvent) => {
