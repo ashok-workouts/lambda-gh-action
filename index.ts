@@ -23,7 +23,8 @@ import {
   GetObjectCommandOutput
 } from '@aws-sdk/client-s3';
 
-import xmlJs;
+import xml-js;
+// import xmlJs;
 // from 'xml-js';
 import * as _ from "lodash";
 
@@ -77,7 +78,7 @@ export function getFirstTextXml(item: any): string {
 export function parseFulfillmentXml(xml: string, filename: string) {
 	const appId = 'parseFulfillmentXml';
 	try {
-		const json = xmlJs.xml2js(xml, {
+		const json = xml-js.xmlJs.xml2js(xml, {
 			compact: true,
 			alwaysArray: true,
 		});
