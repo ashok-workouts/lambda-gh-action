@@ -76,7 +76,7 @@ export function getFirstTextXml(item: any): string {
 export function parseFulfillmentXml(xml: string, filename: string) {
 	const appId = 'parseFulfillmentXml';
 	try {
-		const json = xml-js.xmlJs.xml2js(xml, {
+		const json = xmlJs.xml2js(xml, {
 			compact: true,
 			alwaysArray: true,
 		});
