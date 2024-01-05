@@ -11,6 +11,9 @@
 //   return response;
 // };
 
+// import { promises as fsPromises } from 'fs'; 
+// import { parseString } from 'xml2js';
+
 import { 
   SQSEvent, 
   SQSHandler
@@ -124,8 +127,15 @@ export function parseFulfillmentXml(xml: string, filename: string) {
 export const handler: SQSHandler = async (event: SQSEvent) => {
   
   try {
-      const body = getObjectAsString(file_name);
-      console.log(`The file body is:: ${body}`)
+      const xmlbody = getObjectAsString(file_name);
+      console.log(`The file body is:: ${xmlbody}`)
+	  const { fulfillments, webStore: newWebStore } = parseFulfillmentXml(xmlbody, file_name);
+	//   parseString(xmlbody, function (err, results) { 
+	// 	// parsing to json 
+	// 	let data = JSON.stringify(results)   
+	// 	// display the json data 
+	// 	console.log("results",data); 
+	// 	});
   }
   catch (err) {
       console.log(err);
