@@ -19,22 +19,22 @@ import {
 	SQSHandler
   } from 'aws-lambda';
   
-  import {
+import {
 	S3Client,
 	GetObjectCommandInput,
 	GetObjectCommand,
 	GetObjectCommandOutput
   } from '@aws-sdk/client-s3';
   
-  import xmlJs from 'xml-js';
-  import * as _ from "lodash";
+import xmlJs from 'xml-js';
+import * as _ from "lodash";
   
-  const client = new S3Client({ region: "us-east-1" });
-  const file_name = "Sample_xml_processingfile.xml"
-  const bucket = "ak-workouts-us-east-1"
+const client = new S3Client({ region: "us-east-1" });
+const file_name = "Sample_xml_processingfile.xml"
+const bucket = "ak-workouts-us-east-1"
   
-  async function getObject(key: string): Promise<GetObjectCommandOutput> {
-	// const appId = `${svcName} | getObject`;
+async function getObject(key: string): Promise<GetObjectCommandOutput> {
+	console.log("getObject() started execution........")
 	const params: GetObjectCommandInput = {
 		Bucket: bucket,
 		Key: file_name,
@@ -47,11 +47,12 @@ import {
 		console.log(error.message, { bucket, key }, error);
 		throw error;
 	}
-  }
+}
   
 
-//   async function getObjectAsString(key: string): Promise<string> {
-  async function getObjectAsString(key: string) {
+// async function getObjectAsString(key: string): Promise<string> {
+async function getObjectAsString(key: string) {
+	console.log("getObjectAsString() started execution........")
 	try {
 		const s3Object = await getObject(key);
   
@@ -64,70 +65,72 @@ import {
 	  console.log(error.message, { key, bucket }, error);
 		throw error;
 	}
-  }
+}
   
   
-  export function parseWebStore(webStore: string): number {
-	  return parseInt(webStore.replace(/\D/g, ''), 10);
-  }
+export function parseWebStore(webStore: string): number {
+	console.log("parseWebStore() started execution........")
+	return parseInt(webStore.replace(/\D/g, ''), 10);
+}
   
   
-  export function getFirstTextXml(item: any): string {
-	  if (!item || !item[0] || !item[0]._text || !item[0]._text[0]) return '';
-	  return item[0]._text[0].trim();
-  }
+export function getFirstTextXml(item: any): string {
+	console.log("getFirstTextXml() started execution........")
+	if (!item || !item[0] || !item[0]._text || !item[0]._text[0]) return '';
+	return item[0]._text[0].trim();
+}
   
   
-  export function parseFulfillmentXml(xml: string, filename: string) {
-	  const appId = 'parseFulfillmentXml';
-	  try {
-		  const json = xmlJs.xml2js(xml, {
-			  compact: true,
-			  alwaysArray: true,
-		  });
-  
-		  // this should never happen
-		  // if (!json?.Data945) {
-		  if (!json) {
-			  throw new Error(`parseFulfillmentXml: malformed xml file ${filename}`);
-		  }
-  
-		  return {
-			  webStore: parseWebStore(getFirstTextXml(json[0].WebStore)),
-			  // we need to drill down a few levels to get to the '<document>' node
-			  fulfillments: json[0].documents[0].document.map(document => {
-				  const header = document.headerrow[0];
-				  return {
-					  orderId: parseInt(getFirstTextXml(header?.reference), 10),
-					  shipDate: getFirstTextXml(header?.shipdate),
-					  shippingName: getFirstTextXml(header?.transportationcode),
-					  // get each package with in the document
-					  packages: document?.documentpackages[0].packagerow.map(packageRow => {
-						  return {
-							  trackingNumber: getFirstTextXml(packageRow?.packagenumber),
-							  packageShipDate: getFirstTextXml(packageRow?.package_shipdate),
-							  lines: packageRow?.document_lines[0]?.linerow.map(line => {
-								  return {
-									  SKU: getFirstTextXml(line.SKU),
-									  UPC: getFirstTextXml(line.UPC),
-									  quantity: parseInt(getFirstTextXml(line.quantity), 10),
-								  };
-							  }),
-						  };
-					  }),
-				  };
-			  }),
-		  };
-	  } catch (error) {
-		  console.log(appId, `${filename} ${error.message}`, { filename }, error);
-		  throw error;
-	  }
-  }
-  
-  
-  
-  export const handler: SQSHandler = async (event: SQSEvent) => {
-	
+export function parseFulfillmentXml(xml: string, filename: string) {
+	console.log("parseFulfillmentXml() started execution........")
+	const appId = 'parseFulfillmentXml';
+	try {
+		const json = xmlJs.xml2js(xml, {
+			compact: true,
+			alwaysArray: true,
+		});
+
+		// this should never happen
+		// if (!json?.Data945) {
+		if (!json) {
+			throw new Error(`parseFulfillmentXml: malformed xml file ${filename}`);
+		}
+
+		return {
+			webStore: parseWebStore(getFirstTextXml(json[0].WebStore)),
+			// we need to drill down a few levels to get to the '<document>' node
+			fulfillments: json[0].documents[0].document.map(document => {
+				const header = document.headerrow[0];
+				return {
+					orderId: parseInt(getFirstTextXml(header?.reference), 10),
+					shipDate: getFirstTextXml(header?.shipdate),
+					shippingName: getFirstTextXml(header?.transportationcode),
+					// get each package with in the document
+					packages: document?.documentpackages[0].packagerow.map(packageRow => {
+						return {
+							trackingNumber: getFirstTextXml(packageRow?.packagenumber),
+							packageShipDate: getFirstTextXml(packageRow?.package_shipdate),
+							lines: packageRow?.document_lines[0]?.linerow.map(line => {
+								return {
+									SKU: getFirstTextXml(line.SKU),
+									UPC: getFirstTextXml(line.UPC),
+									quantity: parseInt(getFirstTextXml(line.quantity), 10),
+								};
+							}),
+						};
+					}),
+				};
+			}),
+		};
+	} catch (error) {
+		console.log(appId, `${filename} ${error.message}`, { filename }, error);
+		throw error;
+	}
+}
+
+
+export const handler: SQSHandler = async (event: SQSEvent) => {
+	console.log("Handler started execution........")
 	try {
 		const xmlbody = getObjectAsString(file_name);
 		console.log(`The file body is:: ${xmlbody}`)
@@ -144,4 +147,4 @@ import {
 		throw err;
   
 	}
-  };
+};
