@@ -81,7 +81,7 @@ export function getFirstTextXml(item: any): string {
 }
   
   
-export function parseFulfillmentXml(xml: string, filename: string) {
+export function parseFulfillmentXml(xml: any, filename: string) {
 	console.log("parseFulfillmentXml() started execution........")
 	const appId = 'parseFulfillmentXml';
 	try {
@@ -141,8 +141,8 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
 			// display the json data 
 			console.log("results",data); 
 	  	});
-		// const { fulfillments, webStore: newWebStore } = parseFulfillmentXml(xmlbody, file_name);
-		// console.log("fulfillments is: ", fulfillments)
+		const { fulfillments, webStore: newWebStore } = parseFulfillmentXml(xmlbody, file_name);
+		console.log("fulfillments is: ", fulfillments)
 	}
 	catch (err) {
 		console.log(err);
