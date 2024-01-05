@@ -49,7 +49,9 @@ import {
 	}
   }
   
-  async function getObjectAsString(key: string): Promise<string> {
+
+//   async function getObjectAsString(key: string): Promise<string> {
+  async function getObjectAsString(key: string) {
 	try {
 		const s3Object = await getObject(key);
   
