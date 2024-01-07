@@ -92,15 +92,17 @@ export function parseFulfillmentXml(xml: string, filename: string) {
 		});
 		console.log("json is: ", json)
 		// this should never happen
-		// if (!json?.Data945) {
-		if (!json) {
+		if (!json?.Data945) {
+		// if (!json) {
 			throw new Error(`parseFulfillmentXml: malformed xml file ${filename}`);
 		}
 
 		return {
-			webStore: parseWebStore(getFirstTextXml(json[0].WebStore)),
+			webStore: parseWebStore(getFirstTextXml(json.Data945[0].WebStore)),
+			// webStore: parseWebStore(getFirstTextXml(json[0].WebStore)),
 			// we need to drill down a few levels to get to the '<document>' node
-			fulfillments: json[0].documents[0].document.map(document => {
+			fulfillments: json.Data945[0].documents[0].document.map(document => {
+			// fulfillments: json[0].documents[0].document.map(document => {
 				const header = document.headerrow[0];
 				return {
 					orderId: parseInt(getFirstTextXml(header?.reference), 10),
