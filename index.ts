@@ -81,15 +81,16 @@ export function getFirstTextXml(item: any): string {
 }
   
   
-export function parseFulfillmentXml(xml: any, filename: string) {
+export function parseFulfillmentXml(xml: string, filename: string) {
 	console.log("parseFulfillmentXml() started execution........")
 	const appId = 'parseFulfillmentXml';
 	try {
+		console.log("In try block of parseFulfillmentXml()....")
 		const json = xmlJs.xml2js(xml, {
 			compact: true,
 			alwaysArray: true,
 		});
-
+		console.log("json is: ", json)
 		// this should never happen
 		// if (!json?.Data945) {
 		if (!json) {
@@ -132,15 +133,15 @@ export function parseFulfillmentXml(xml: any, filename: string) {
 export const handler: SQSHandler = async (event: SQSEvent) => {
 	console.log("Handler started execution........")
 	try {
-		const xmlbody = getObjectAsString(file_name);
+		const xmlbody = await getObjectAsString(file_name);
 		console.log(`The file body is:: ${xmlbody}`)
-	    parseString(xmlbody, function (err, results) { 
-			console.log("parseString started execution.............")
-			// parsing to json 
-			let data = JSON.stringify(results)   
-			// display the json data 
-			console.log("results",data); 
-	  	});
+	    // parseString(xmlbody, function (err, results) { 
+		// 	console.log("parseString started execution.............")
+		// 	// parsing to json 
+		// 	let data = JSON.stringify(results)   
+		// 	// display the json data 
+		// 	console.log("results",data); 
+	  	// });
 		const { fulfillments, webStore: newWebStore } = parseFulfillmentXml(xmlbody, file_name);
 		console.log("fulfillments is: ", fulfillments)
 	}
