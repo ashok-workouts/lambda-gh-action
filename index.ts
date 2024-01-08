@@ -26,7 +26,7 @@ import {
 	GetObjectCommandOutput
   } from '@aws-sdk/client-s3';
   
-import {xmlJs} from 'xml-js';
+import xml2js from 'xml-js';
 import * as _ from "lodash";
   
 const client = new S3Client({ region: "us-east-1" });
