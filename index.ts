@@ -26,7 +26,8 @@ import {
 	GetObjectCommandOutput
   } from '@aws-sdk/client-s3';
   
-import xml2js from 'xml-js';
+// import xml2js from 'xml-js';
+import xmlJs from 'xml-js';
 import * as _ from "lodash";
   
 const client = new S3Client({ region: "us-east-1" });
@@ -79,6 +80,51 @@ export function getFirstTextXml(item: any): string {
 	if (!item || !item[0] || !item[0]._text || !item[0]._text[0]) return '';
 	return item[0]._text[0].trim();
 }
+
+export interface FullfillmentXmlData {
+	[Data945: string]: [
+		{
+			WebStore: [{ _text: string }];
+			documents: [
+				{
+					document: [
+						{
+							headerrow: [
+								{
+									reference: [{ _text: string }];
+									shipdate: [{ _text: string }];
+									transportationcode: [{ _text: string }];
+								},
+							];
+							documentpackages: [
+								{
+									packagerow: [
+										{
+											packagenumber: [{ _text: string }];
+											package_shipdate: [{ _text: string }];
+											document_lines: [
+												{
+													linerow: [
+														{
+															SKU: [{ _text: string }];
+															UPC: [{ _text: string }];
+															quantity: [{ _text: string }];
+														},
+													];
+												},
+											];
+										},
+									];
+								},
+							];
+						},
+					];
+				},
+			];
+		},
+	];
+}
+
   
   
 export function parseFulfillmentXml(xml: string, filename: string) {
@@ -86,10 +132,14 @@ export function parseFulfillmentXml(xml: string, filename: string) {
 	const appId = 'parseFulfillmentXml';
 	try {
 		console.log("In try block of parseFulfillmentXml()....")
+		// const json = xml2Js.xml2js(xml, {
+		// 	compact: true,
+		// 	alwaysArray: true,
+		// });
 		const json = xmlJs.xml2js(xml, {
 			compact: true,
 			alwaysArray: true,
-		});
+		}) as unknown as FullfillmentXmlData;
 		console.log("json is: ", json)
 		// this should never happen
 		if (!json?.Data945) {
