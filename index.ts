@@ -31,7 +31,8 @@ import xmlJs from 'xml-js';
 import * as _ from "lodash";
   
 const client = new S3Client({ region: "us-east-1" });
-const file_name = "Sample_xml_processingfile.xml"
+// const file_name = "Sample_xml_processingfile.xml"
+const file_name = "cancelledWMSECom_E102_20240104_134106_2.xml"
 const bucket = "ak-workouts-us-east-1"
   
 async function getObject(key: string): Promise<GetObjectCommandOutput> {
@@ -81,6 +82,37 @@ export function getFirstTextXml(item: any): string {
 	return item[0]._text[0].trim();
 }
 
+export interface PackageLineItem {
+	SKU: string;
+	UPC?: string;
+	quantity: number;
+}
+
+
+export interface BaseFulfillmentData {
+	orderId: number;
+	shipDate: string;
+	shippingName: string;
+	fulfillEntireOrder?: boolean;
+	packages: {
+		packageShipDate: string;
+		trackingNumber: string;
+		lines: PackageLineItem[];
+	}[];
+}
+
+export interface CsvFulfillmentData extends BaseFulfillmentData {
+	phoneNumber: string;
+	name: string;
+}
+
+export type FulfillmentData = BaseFulfillmentData | CsvFulfillmentData;
+
+export interface ParsedFulfillmentData {
+	webStore: number;
+	fulfillments: FulfillmentData[];
+}
+
 export interface FullfillmentXmlData {
 	[Data945: string]: [
 		{
@@ -127,7 +159,7 @@ export interface FullfillmentXmlData {
 
   
   
-export function parseFulfillmentXml(xml: string, filename: string) {
+export function parseFulfillmentXml(xml: string, filename: string): ParsedFulfillmentData {
 	console.log("parseFulfillmentXml() started execution........")
 	const appId = 'parseFulfillmentXml';
 	try {
@@ -187,13 +219,13 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
 	try {
 		const xmlbody = await getObjectAsString(file_name);
 		console.log(`The file body is:: ${xmlbody}`)
-	    // parseString(xmlbody, function (err, results) { 
-		// 	console.log("parseString started execution.............")
-		// 	// parsing to json 
-		// 	let data = JSON.stringify(results)   
-		// 	// display the json data 
-		// 	console.log("results",data); 
-	  	// });
+	    parseString(xmlbody, function (err, results) { 
+			console.log("parseString started execution.............")
+			// parsing to json 
+			let data = JSON.stringify(results)   
+			// display the json data 
+			console.log("results",data); 
+	  	});
 		const { fulfillments, webStore: newWebStore } = parseFulfillmentXml(xmlbody, file_name);
 		console.log("fulfillments is: ", fulfillments)
 	}
