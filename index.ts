@@ -215,16 +215,10 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
 	console.log("Handler started execution........")
 	try {
 		const xmlbody = await getObjectAsString(file_name);
-		console.log(`The file body is:: ${xmlbody}`)
-	    parseString(xmlbody, function (err, results) { 
-			console.log("parseString started execution.............")
-			// parsing to json 
-			let data = JSON.stringify(results)   
-			// display the json data 
-			console.log("results",data); 
-	  	});
+		console.log(`The xml file body is:: ${xmlbody}`)
 		const { fulfillments, webStore: newWebStore } = parseFulfillmentXml(xmlbody, file_name);
 		console.log("fulfillments is: ", fulfillments)
+		console.log("webStore is: ", newWebStore)
 	}
 	catch (err) {
 		console.log(err);
