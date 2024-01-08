@@ -26,13 +26,12 @@ import {
 	GetObjectCommandOutput
   } from '@aws-sdk/client-s3';
   
-// import xml2js from 'xml-js';
 import xmlJs from 'xml-js';
 import * as _ from "lodash";
   
 const client = new S3Client({ region: "us-east-1" });
 // const file_name = "Sample_xml_processingfile.xml"
-const file_name = "cancelledWMSECom_E102_20240104_134106_2.xml"
+const file_name = "Sample_945ECom_E102.xml"
 const bucket = "ak-workouts-us-east-1"
   
 async function getObject(key: string): Promise<GetObjectCommandOutput> {
@@ -175,9 +174,9 @@ export function parseFulfillmentXml(xml: string, filename: string): ParsedFulfil
 		console.log("json is: ", json)
 
 		// this should never happen
-		// if (!json?.Data945) {
-		// 	throw new Error(`parseFulfillmentXml: malformed xml file ${filename}`);
-		// }
+		if (!json?.Data945) {
+			throw new Error(`parseFulfillmentXml: malformed xml file ${filename}`);
+		}
 
 		return {
 			webStore: parseWebStore(getFirstTextXml(json.Data945[0].WebStore)),
