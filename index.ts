@@ -11,7 +11,7 @@
 //   return response;
 // };
 
-import { SQSService } from 'sqs';
+// import { SQSService } from 'sqs';
 import { promises as fsPromises } from 'fs'; 
 import { parseString } from 'xml2js';
 
