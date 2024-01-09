@@ -11,6 +11,7 @@
 //   return response;
 // };
 
+import { SQSService } from 'sqs';
 import { promises as fsPromises } from 'fs'; 
 import { parseString } from 'xml2js';
 
@@ -68,7 +69,7 @@ async function getObjectAsString(key: string) {
 	}
 }
   
-  
+
 export function parseWebStore(webStore: string): number {
 	console.log("parseWebStore() started execution........")
 	return parseInt(webStore.replace(/\D/g, ''), 10);
@@ -100,17 +101,21 @@ export interface BaseFulfillmentData {
 	}[];
 }
 
+
 export interface CsvFulfillmentData extends BaseFulfillmentData {
 	phoneNumber: string;
 	name: string;
 }
 
+
 export type FulfillmentData = BaseFulfillmentData | CsvFulfillmentData;
+
 
 export interface ParsedFulfillmentData {
 	webStore: number;
 	fulfillments: FulfillmentData[];
 }
+
 
 export interface FullfillmentXmlData {
 	[Data945: string]: [
@@ -156,7 +161,6 @@ export interface FullfillmentXmlData {
 	];
 }
 
-  
   
 export function parseFulfillmentXml(xml: string, filename: string): ParsedFulfillmentData {
 	console.log("parseFulfillmentXml() started execution........")
@@ -211,6 +215,56 @@ export function parseFulfillmentXml(xml: string, filename: string): ParsedFulfil
 }
 
 
+export async function processFulfillmentJson(
+	webStore: number,
+	fulfillments: FulfillmentData[],
+	filename: string,
+): Promise<void> {
+	const appId = `processFulfillmentJson`;
+	const FULFILLMENT_ITEM_QUEUE = "FULFILLMENT_ITEM_QUEUE";
+	console.log("Started execution processFulfillmentJson()...........")
+	try {
+		if (!fulfillments || fulfillments?.length < 1) {
+			throw new Error(filename);
+		}
+
+		// --- break up fulfillments into units and send to SQS
+		// --- break up packages by package row to ease fulfillment
+		const sqsMessages = fulfillments.flatMap(fulfillment => {
+			return fulfillment.packages.map(packageRow => {
+				const payload: {
+					webStore: number;
+					filename: string;
+					data: FulfillmentData;
+				} = {
+					webStore,
+					filename,
+					data: {
+						orderId: fulfillment.orderId,
+						shipDate: fulfillment.shipDate,
+						shippingName: fulfillment.shippingName,
+						phoneNumber: 'phoneNumber' in fulfillment ? fulfillment.phoneNumber : undefined,
+						name: 'name' in fulfillment ? fulfillment.name : undefined,
+						fulfillEntireOrder: fulfillment.fulfillEntireOrder,
+						packages: [packageRow],
+					},
+				};
+
+				return JSON.stringify(payload);
+			});
+		});
+		console.log("sqsMessages is: ", sqsMessages);
+		// await SQSService(FULFILLMENT_ITEM_QUEUE).chunkAndPublish(sqsMessages);
+	} catch (error) {
+		// const storeUrl = getAdminUrl(webStore);
+		// const logParams = { webStore, storeUrl, filename };
+		throw error()
+		console.log(error.message, error);
+		throw error;
+	}
+}
+
+
 export const handler: SQSHandler = async (event: SQSEvent) => {
 	console.log("Handler started execution........")
 	try {
@@ -219,6 +273,7 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
 		const { fulfillments, webStore: newWebStore } = parseFulfillmentXml(xmlbody, file_name);
 		console.log("fulfillments is: ", fulfillments)
 		console.log("webStore is: ", newWebStore)
+		await processFulfillmentJson(newWebStore, fulfillments, file_name);
 	}
 	catch (err) {
 		console.log(err);
