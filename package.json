@@ -15,6 +15,7 @@
     "lodash": "^4.17.21",
     "logger": "^0.0.1",
     "p-queue": "^8.0.1",
+    "sqs": "^2.0.2",
     "typescript": "^5.3.3",
     "typescript-logging": "^2.1.0",
     "typescript-logging-log4ts-style": "^2.1.0",
