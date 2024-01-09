@@ -26,7 +26,7 @@ interface SQSServiceResponse {
 	chunkAndPublish: (messages: string[]) => Promise<void>;
 }
 
-const { AWS_REGION } = process.env;
+const AWS_REGION = 'us-east-1';
 const _sqsClient = new SQSClient({ region: AWS_REGION });
 
 // eslint-disable-next-line sonarjs/cognitive-complexity

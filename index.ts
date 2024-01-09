@@ -11,9 +11,9 @@
 //   return response;
 // };
 
-// import { SQSService } from 'sqs';
-import { promises as fsPromises } from 'fs'; 
-import { parseString } from 'xml2js';
+import { SQSService } from '@sqs';
+// import { promises as fsPromises } from 'fs'; 
+// import { parseString } from 'xml2js';
 
 import { 
 	SQSEvent, 
@@ -221,7 +221,7 @@ export async function processFulfillmentJson(
 	filename: string,
 ): Promise<void> {
 	const appId = `processFulfillmentJson`;
-	const FULFILLMENT_ITEM_QUEUE = "FULFILLMENT_ITEM_QUEUE";
+	const FULFILLMENT_ITEM_QUEUE = "arn:aws:sqs:us-east-1:773658737383:processfulfillment-items-queue";
 	console.log("Started execution processFulfillmentJson()...........")
 	try {
 		if (!fulfillments || fulfillments?.length < 1) {
@@ -254,7 +254,7 @@ export async function processFulfillmentJson(
 			});
 		});
 		console.log("sqsMessages is: ", sqsMessages);
-		// await SQSService(FULFILLMENT_ITEM_QUEUE).chunkAndPublish(sqsMessages);
+		await SQSService(FULFILLMENT_ITEM_QUEUE).chunkAndPublish(sqsMessages);
 	} catch (error) {
 		// const storeUrl = getAdminUrl(webStore);
 		// const logParams = { webStore, storeUrl, filename };
