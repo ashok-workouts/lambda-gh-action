@@ -245,7 +245,7 @@ export function parseFulfillmentXml(xml: string, filename: string): ParsedFulfil
 
 export function SQSService(queueArn?: string): SQSServiceResponse {
 	const svcName = `🗼 SQSService`;
-
+	console.log("Executing SQSService() function.......")	
 	if (!AWS_REGION) {
 		// Should never happen as this is a standard Lambda env var
 		throw new Error('AWS_REGION');
@@ -256,11 +256,13 @@ export function SQSService(queueArn?: string): SQSServiceResponse {
 	const _sqsEndpointUrl = _sqsClient.config.endpointProvider({ Region: AWS_REGION }).url.href;
 
 	function _deconstructQueueArn() {
+		console.log("Executing _deconstructQueueArn() function.......")	
 		if (!queueArn) {
 			throw new Error();
 		}
 		const accountId = queueArn.split(':')[4];
 		const queueName = queueArn.split(':')[5];
+		console.log("queueName is: ", queueName);
 		return `${_sqsEndpointUrl}${accountId}/${queueName}`;
 	}
 
@@ -304,6 +306,7 @@ export function SQSService(queueArn?: string): SQSServiceResponse {
 	}
 
 	async function publishBatch(messages: string[]) {
+		console.log("Executing publishBatch() function.......")
 		const appId = `${svcName} | publishBatch`;
 		const queueUrl = _deconstructQueueArn();
 		const params: SendMessageBatchCommandInput = {
@@ -321,7 +324,7 @@ export function SQSService(queueArn?: string): SQSServiceResponse {
 		try {
 			const command = new SendMessageBatchCommand(params);
 			const result = await _sqsClient.send(command);
-			console.log(appId, 'SQS Result', result);
+			console.log(appId, 'SQS Result is: ', result);
 		} catch (error) {
 			console.log(appId, error.message, {}, error);
 			throw error;
@@ -330,7 +333,7 @@ export function SQSService(queueArn?: string): SQSServiceResponse {
 
 	async function chunkAndPublish(messages: string[]) {
 		const chunks: string[][] = [];
-
+		console.log("Executing chunkAndPublish() function.......")	
 		let i, j, temparray;
 		for (i = 0, j = messages.length; i < j; i += CHUNK_SIZE) {
 			temparray = messages.slice(i, i + CHUNK_SIZE);
